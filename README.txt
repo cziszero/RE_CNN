@@ -1,4 +1,4 @@
-Ê¹ÓÃPython + TheanoÊµÏÖCNN¹ØÏµ·ÖÀà[1]£¬´ÊÏòÁ¿Ê¹ÓÃGlove[2]£¬Êı¾İ¼¯Îª¡¶SemEval2010_task8_all_data¡·¡£
+ä½¿ç”¨Python + Theanoå®ç°CNNå…³ç³»åˆ†ç±»[1]ï¼Œè¯å‘é‡ä½¿ç”¨Glove[2]ï¼Œæ•°æ®é›†ä¸ºã€ŠSemEval2010_task8_all_dataã€‹ã€‚
 
 
 [1] Zeng D, Liu K, Lai S, et al. Relation Classification via Convolutional Deep Neural Network[C]//COLING. 2014: 2335-2344.

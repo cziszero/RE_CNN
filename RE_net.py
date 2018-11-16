@@ -4,7 +4,7 @@ import os
 import sys
 import time
 import re
-import cPickle
+import pickle
 from RE_layers import *
 from collections import OrderedDict
 
@@ -32,10 +32,10 @@ def confusion_matrix_generator(answer, pred):
     rel_d_dict[16], rel_d_dict[17], rel_d_dict[18] = 9, 8, 8
     rel_ud_dict[16], rel_ud_dict[17], rel_ud_dict[18] = 18, 16, 17
 
-    answer_d = map(lambda i: rel_d_dict[i], answer)
-    pred_d = map(lambda i: rel_d_dict[i], pred)
-    answer_ud = map(lambda i: rel_ud_dict[i], answer)
-    pred_ud = map(lambda i: rel_ud_dict[i], pred)
+    answer_d = [rel_d_dict[i] for i in answer]
+    pred_d = [rel_d_dict[i] for i in pred]
+    answer_ud = [rel_ud_dict[i] for i in answer]
+    pred_ud = [rel_ud_dict[i] for i in pred]
 
     for res_d in zip(answer_d, pred_d):
         confusion_matrix[0][res_d[0], res_d[1]] += 1
@@ -95,7 +95,7 @@ def get_rel_list(predicted, answer, start_index, rel_dict):
     assert len(predicted) == len(answer)
     sample_num = len(predicted)
     reversed_rel_dict = dict()
-    for k, v in rel_dict.iteritems():
+    for k, v in rel_dict.items():
         reversed_rel_dict.setdefault(v, k)
 
     ans_list = list()
@@ -146,9 +146,9 @@ def load_data(data_file):
     """
     读取数据，生成shared变量。
     """
-    print '... loading data'
+    print('... loading data')
     with open(data_file) as f:
-        dataset = cPickle.load(f)
+        dataset = pickle.load(f)
     # train_set = dataset.ix[0:6999]
     train_set = dataset.ix[0:7999]
     # valid_set = dataset.ix[7000:7999]
@@ -157,13 +157,13 @@ def load_data(data_file):
     def shared_dataset(data_set, borrow=True):
         data_x, data_y = list(data_set["Sentences"]), list(data_set["Relations"])
         data_pos = list(data_set["EntitiesPos"])
-        data_pos1 = map(lambda s: map(lambda p: p[0], s), data_pos)
-        data_pos2 = map(lambda s: map(lambda p: p[1], s), data_pos)
+        data_pos1 = [[p[0] for p in s] for s in data_pos]
+        data_pos2 = [[p[1] for p in s] for s in data_pos]
         data_l1 = list(data_set["L1"])
         data_l2 = list(data_set["L2"])
-        data_l3l, data_l3r = map(lambda x: x[0], list(data_set["L3"])), map(lambda x: x[1], list(data_set["L3"]))
-        data_l4l, data_l4r = map(lambda x: x[0], list(data_set["L4"])), map(lambda x: x[1], list(data_set["L4"]))
-        data_l51, data_l52 = map(lambda x: x[0], list(data_set["L5"])), map(lambda x: x[1], list(data_set["L5"]))
+        data_l3l, data_l3r = [x[0] for x in list(data_set["L3"])], [x[1] for x in list(data_set["L3"])]
+        data_l4l, data_l4r = [x[0] for x in list(data_set["L4"])], [x[1] for x in list(data_set["L4"])]
+        data_l51, data_l52 = [x[0] for x in list(data_set["L5"])], [x[1] for x in list(data_set["L5"])]
 
         shared_x = theano.shared(numpy.asarray(data_x, dtype=theano.config.floatX), borrow=borrow)
         shared_y = theano.shared(numpy.asarray(data_y, dtype=theano.config.floatX), borrow=borrow)
@@ -224,9 +224,9 @@ def evaluate_recnn(learning_rate=0.1,
     # n_valid_batches /= batch_size
     n_test_batches /= batch_size
 
-    matrix_wordidx = numpy.asarray(cPickle.load(open(wordidx_matrix)), dtype=theano.config.floatX)
-    matrix_posidx = numpy.asarray(cPickle.load(open(posidx_matrix)), dtype=theano.config.floatX)
-    dict_rel = cPickle.load(open(relation_dict))
+    matrix_wordidx = numpy.asarray(pickle.load(open(wordidx_matrix)), dtype=theano.config.floatX)
+    matrix_posidx = numpy.asarray(pickle.load(open(posidx_matrix)), dtype=theano.config.floatX)
+    dict_rel = pickle.load(open(relation_dict))
 
     sent_length = train_set_x.get_value().shape[1]
 
@@ -255,7 +255,7 @@ def evaluate_recnn(learning_rate=0.1,
     zero_vec_pos = numpy.zeros(matrix_posidx.shape[1], dtype=theano.config.floatX)
 
 
-    print '...building the model'
+    print('...building the model')
 
     initlayer = TransLayer(
         sent=x.reshape((batch_size, 1, sent_length, 1)),
@@ -417,7 +417,7 @@ def evaluate_recnn(learning_rate=0.1,
     ###############
     # TRAIN MODEL #
     ###############
-    print '... training'
+    print('... training')
     best_test_f1 = 0
     best_test_iter = 0
     start_time = time.clock()
@@ -430,7 +430,7 @@ def evaluate_recnn(learning_rate=0.1,
         train_error_list = []
         train_cost_list = []
         # totally n mini batches
-        for minibatch_index in xrange(n_train_batches):
+        for minibatch_index in range(n_train_batches):
             # calculate one mini batch in one iter
             iter_n = (epoch - 1) * n_train_batches + minibatch_index
             # cost of this mini batch
@@ -446,23 +446,23 @@ def evaluate_recnn(learning_rate=0.1,
                     # compute zero-one loss on validation set
                     test_res = [
                             test_model(i)
-                            for i in xrange(n_test_batches)
+                            for i in range(n_test_batches)
                         ]
                 else:
                     test_res = [test_model(0)]
 
                 this_train_losses = numpy.mean(train_error_list)
                 this_train_costes = numpy.mean(train_cost_list)
-                this_test_losses = numpy.mean(map(lambda l: l[0], test_res))
+                this_test_losses = numpy.mean([l[0] for l in test_res])
 
                 # predict relations of test set
                 predict_rel = list()
-                for predict in map(lambda x: list(x[1]), test_res):
+                for predict in [list(x[1]) for x in test_res]:
                     predict_rel += predict
 
                 # proposed relations of test set
                 anser_rel = list()
-                for propose in map(lambda x: list(x[2]), test_res):
+                for propose in [list(x[2]) for x in test_res]:
                     anser_rel += propose
 
                 # 自己写的macro_avg_f1
@@ -488,38 +488,38 @@ def evaluate_recnn(learning_rate=0.1,
                     with open(answer_file, "w") as answer_write:
                         answer_write.writelines(answer_res)
                     with open(static_res_file, "w") as static_res_write:
-                        cPickle.dump(static_res, static_res_write)
+                        pickle.dump(static_res, static_res_write)
                     with open(p_r_f1_file, "w") as p_r_f1_write:
-                        cPickle.dump(p_r_f1, p_r_f1_write)
+                        pickle.dump(p_r_f1, p_r_f1_write)
                     with open(confusion_matrix_file, "w") as confusion_matrix_write:
-                        cPickle.dump(confusion_matrix, confusion_matrix_write)
+                        pickle.dump(confusion_matrix, confusion_matrix_write)
 
                     # 调用perl程序计算F1值
                     command = "dataset\\SemEval2010_task8_all_data\\SemEval2010_task8_scorer-v1.2\\semeval2010_task8_scorer-v1.2.pl "\
                               + pred_file + " " + answer_file + " > " + score_file
                     os.system(command.encode('gbk'))
 
-                    print('epoch %i, iter %i, minibatch %i/%i, train cost %f, train error %f %%, test error %f %%, F1(best) %f %%' %
+                    print(('epoch %i, iter %i, minibatch %i/%i, train cost %f, train error %f %%, test error %f %%, F1(best) %f %%' %
                           (epoch, iter_n + 1, minibatch_index + 1, n_train_batches, this_train_costes, this_train_losses * 100,
-                           this_test_losses * 100., macro_avg_f1 * 100) + '\t\t' + time.ctime())
+                           this_test_losses * 100., macro_avg_f1 * 100) + '\t\t' + time.ctime()))
 
                 else:
-                    print('epoch %i, iter %i, minibatch %i/%i, train cost %f, train error %f %%, test error %f %%, F1 %f %%' %
+                    print(('epoch %i, iter %i, minibatch %i/%i, train cost %f, train error %f %%, test error %f %%, F1 %f %%' %
                           (epoch, iter_n + 1, minibatch_index + 1, n_train_batches, this_train_costes, this_train_losses * 100,
-                           this_test_losses * 100., macro_avg_f1 * 100) + '\t\t' + time.ctime())
+                           this_test_losses * 100., macro_avg_f1 * 100) + '\t\t' + time.ctime()))
 
     end_time = time.clock()
 
     print('Optimization complete.')
 
-    print('Best F1 score of %f %% obtained at iteration %i, ' %
-          (best_test_f1 * 100., best_test_iter + 1))
+    print(('Best F1 score of %f %% obtained at iteration %i, ' %
+          (best_test_f1 * 100., best_test_iter + 1)))
 
-    print >> sys.stderr, ('The code for file ' +
+    print(('The code for file ' +
                           os.path.split(__file__)[1] +
-                          ' ran for %.2fm' % ((end_time - start_time) / 60.))
-    print 'Parameters:\nwindow_size: %d\nlearning_rate: %f\nn_epochs: %d\nbatch_size: %d\nn1,n2: %d,%d' %\
-          (window_size, learning_rate, n_epochs, batch_size, n[0], n[1])
+                          ' ran for %.2fm' % ((end_time - start_time) / 60.)), file=sys.stderr)
+    print('Parameters:\nwindow_size: %d\nlearning_rate: %f\nn_epochs: %d\nbatch_size: %d\nn1,n2: %d,%d' %\
+          (window_size, learning_rate, n_epochs, batch_size, n[0], n[1]))
 
 
 if __name__ == "__main__":

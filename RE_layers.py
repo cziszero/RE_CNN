@@ -11,6 +11,7 @@ class TransLayer(object):
     """
     将索引形式的输入转换为对应的词向量，作为卷积层的输入
     """
+
     def __init__(self, sent, pos1, pos2, wordidx_matrix, posidx_matrix):
         self.wordidx_matrix = theano.shared(
             value=wordidx_matrix,
@@ -23,9 +24,12 @@ class TransLayer(object):
             borrow=True
         )
 
-        sentvec = self.wordidx_matrix[T.cast(sent.flatten(), dtype="int32")].reshape((sent.shape[0], sent.shape[1], sent.shape[2], wordidx_matrix.shape[1]))
-        posvec0 = self.posidx_matrix[T.cast(pos1.flatten(), dtype="int32")].reshape((pos1.shape[0], pos1.shape[1], pos1.shape[2], posidx_matrix.shape[1]))
-        posvec1 = self.posidx_matrix[T.cast(pos2.flatten(), dtype="int32")].reshape((pos2.shape[0], pos2.shape[1], pos2.shape[2], posidx_matrix.shape[1]))
+        sentvec = self.wordidx_matrix[T.cast(sent.flatten(), dtype="int32")].reshape(
+            (sent.shape[0], sent.shape[1], sent.shape[2], wordidx_matrix.shape[1]))
+        posvec0 = self.posidx_matrix[T.cast(pos1.flatten(), dtype="int32")].reshape(
+            (pos1.shape[0], pos1.shape[1], pos1.shape[2], posidx_matrix.shape[1]))
+        posvec1 = self.posidx_matrix[T.cast(pos2.flatten(), dtype="int32")].reshape(
+            (pos2.shape[0], pos2.shape[1], pos2.shape[2], posidx_matrix.shape[1]))
 
         self.output = T.concatenate([sentvec, posvec0, posvec1], axis=3)
         self.params = [self.wordidx_matrix, self.posidx_matrix]
@@ -39,6 +43,7 @@ class FConvPoolLayer(object):
     """
     手工完成卷积操作，目前未用。
     """
+
     def __init__(self, n0, sent, pos1, pos2, batchsize, swidx, ewidx, wordidx_matrix, posidx_matrix):
         self.wordidx_matrix = theano.shared(
             value=wordidx_matrix,
@@ -52,16 +57,20 @@ class FConvPoolLayer(object):
         )
 
         # index of start symbol
-        self.swidx = numpy.array([swidx] * batchsize, dtype=theano.config.floatX).reshape((batchsize, 1, 1, 1))
+        self.swidx = numpy.array(
+            [swidx] * batchsize, dtype=theano.config.floatX).reshape((batchsize, 1, 1, 1))
         # index of end symbol
-        self.ewidx = numpy.array([ewidx] * batchsize, dtype=theano.config.floatX).reshape((batchsize, 1, 1, 1))
+        self.ewidx = numpy.array(
+            [ewidx] * batchsize, dtype=theano.config.floatX).reshape((batchsize, 1, 1, 1))
 
         self.concidx = T.concatenate([self.swidx, sent, self.ewidx], axis=2)
 
         S = self.wordidx_matrix[T.cast(self.concidx.flatten(), dtype="int32")]\
             .reshape((self.concidx.shape[0], self.concidx.shape[1], self.concidx.shape[2], wordidx_matrix.shape[1]))
-        P1 = self.posidx_matrix[T.cast(pos1.flatten(), dtype="int32")].reshape((pos1.shape[0], pos1.shape[1], pos1.shape[2], posidx_matrix.shape[1]))
-        P2 = self.posidx_matrix[T.cast(pos2.flatten(), dtype="int32")].reshape((pos2.shape[0], pos2.shape[1], pos2.shape[2], posidx_matrix.shape[1]))
+        P1 = self.posidx_matrix[T.cast(pos1.flatten(), dtype="int32")].reshape(
+            (pos1.shape[0], pos1.shape[1], pos1.shape[2], posidx_matrix.shape[1]))
+        P2 = self.posidx_matrix[T.cast(pos2.flatten(), dtype="int32")].reshape(
+            (pos2.shape[0], pos2.shape[1], pos2.shape[2], posidx_matrix.shape[1]))
 
         S_sub1 = S[:][:][:-2]
         S_sub2 = S[:][:][1:-1]
@@ -78,23 +87,33 @@ class FConvPoolLayer(object):
         )
 
         Tmp = T.dot(X, self.W)
-        self.output = T.max(Tmp, axis=3).reshape(X.shape[0], X.shape[1], 1, X.shape[3])
+        self.output = T.max(Tmp, axis=3).reshape(
+            X.shape[0], X.shape[1], 1, X.shape[3])
 
 
 class JointLayer(object):
     """
     将句子特征与词法特征结合
     """
+
     def __init__(self, sent_feature, l1, l2, l3l, l3r, l4l, l4r, l51, l52, wordidx_matrix, dim_word=50):
         self.sent_featue = sent_feature
-        l1 = wordidx_matrix[T.cast(l1.flatten(), dtype="int32")].reshape((l1.shape[0], l1.shape[1], l1.shape[2], dim_word))
-        l2 = wordidx_matrix[T.cast(l2.flatten(), dtype="int32")].reshape((l2.shape[0], l2.shape[1], l1.shape[2], dim_word))
-        l3l = wordidx_matrix[T.cast(l3l.flatten(), dtype="int32")].reshape((l3l.shape[0], l3l.shape[1], l3l.shape[2], dim_word))
-        l3r = wordidx_matrix[T.cast(l3r.flatten(), dtype="int32")].reshape((l3r.shape[0], l3r.shape[1], l3r.shape[2], dim_word))
-        l4l = wordidx_matrix[T.cast(l4l.flatten(), dtype="int32")].reshape((l4l.shape[0], l4l.shape[1], l4l.shape[2], dim_word))
-        l4r = wordidx_matrix[T.cast(l4r.flatten(), dtype="int32")].reshape((l4r.shape[0], l4r.shape[1], l4r.shape[2], dim_word))
-        l51 = wordidx_matrix[T.cast(l51.flatten(), dtype="int32")].reshape((l51.shape[0], l51.shape[1], l51.shape[2], dim_word))
-        l52 = wordidx_matrix[T.cast(l52.flatten(), dtype="int32")].reshape((l52.shape[0], l52.shape[1], l52.shape[2], dim_word))
+        l1 = wordidx_matrix[T.cast(l1.flatten(), dtype="int32")].reshape(
+            (l1.shape[0], l1.shape[1], l1.shape[2], dim_word))
+        l2 = wordidx_matrix[T.cast(l2.flatten(), dtype="int32")].reshape(
+            (l2.shape[0], l2.shape[1], l1.shape[2], dim_word))
+        l3l = wordidx_matrix[T.cast(l3l.flatten(), dtype="int32")].reshape(
+            (l3l.shape[0], l3l.shape[1], l3l.shape[2], dim_word))
+        l3r = wordidx_matrix[T.cast(l3r.flatten(), dtype="int32")].reshape(
+            (l3r.shape[0], l3r.shape[1], l3r.shape[2], dim_word))
+        l4l = wordidx_matrix[T.cast(l4l.flatten(), dtype="int32")].reshape(
+            (l4l.shape[0], l4l.shape[1], l4l.shape[2], dim_word))
+        l4r = wordidx_matrix[T.cast(l4r.flatten(), dtype="int32")].reshape(
+            (l4r.shape[0], l4r.shape[1], l4r.shape[2], dim_word))
+        l51 = wordidx_matrix[T.cast(l51.flatten(), dtype="int32")].reshape(
+            (l51.shape[0], l51.shape[1], l51.shape[2], dim_word))
+        l52 = wordidx_matrix[T.cast(l52.flatten(), dtype="int32")].reshape(
+            (l52.shape[0], l52.shape[1], l52.shape[2], dim_word))
 
         self.l1 = l1
         self.l2 = l2
@@ -187,6 +206,7 @@ class ConvPoolLayer(object):
 
 
 class HiddenLayer(object):
+
     def __init__(self, rng, input, n_in, n_out, W=None, b=None,
                  activation=T.tanh):
         """

@@ -43,7 +43,7 @@ def mongo_wordvec_save(wordvec_file, mongo_collection):
         vec_counter = 0
         newvec_counter = 0
         wordvec_list =[]
-        for wordvec_str in file_wordvec.xreadlines():
+        for wordvec_str in file_wordvec:
             vec_counter += 1
             word, vec = GloveVecPorcesser(wordvec_str).process()
             if not mongo_collection.find_one({"word": word}):
@@ -51,13 +51,13 @@ def mongo_wordvec_save(wordvec_file, mongo_collection):
                 wordvec_list.append({"word": word, "vec": vec})
                 if (newvec_counter) % 1000 == 0:
                     mongo_collection.insert(wordvec_list)
-                    print "Processed %d Vectors.\t\t%d New Vectors.\t\tTime: %s"\
-                          % (vec_counter, newvec_counter, datetime.datetime.now())
+                    print("Processed %d Vectors.\t\t%d New Vectors.\t\tTime: %s"\
+                          % (vec_counter, newvec_counter, datetime.datetime.now()))
                     wordvec_list = []
         if wordvec_list:
             mongo_collection.insert(wordvec_list)
-            print "Processed %d Vectors.\t\t\t%d New Vectors.\t\t\tTime: %s" \
-                  % (vec_counter, newvec_counter, datetime.datetime.now())
+            print("Processed %d Vectors.\t\t\t%d New Vectors.\t\t\tTime: %s" \
+                  % (vec_counter, newvec_counter, datetime.datetime.now()))
 
 
 if __name__ == "__main__":

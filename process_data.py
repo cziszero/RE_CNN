@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import re
 import pymongo
-import cPickle
+import pickle
 import time
 from nltk.corpus import wordnet as wn
 
@@ -120,7 +120,7 @@ class SentenceProcesser(object):
             self.clear_sentence()
             self.get_list_pos()
         except:
-            print "Sentence:", self.sentence
+            print("Sentence:", self.sentence)
             return False
         else:
             return self.sentence_list, self.entity_pos
@@ -213,7 +213,7 @@ def data_clear(input_file):
     with open(input_file, "r") as data_file:
         data_content = data_file.readlines()
         cleared_data = []
-        for i in xrange(len(data_content) / 4):
+        for i in range(len(data_content) / 4):
             sentence_word_list, entity_pos = SentenceProcesser(data_content[4 * i]).process()
             vocabulary_set = voc_set_add(sentence_word_list, vocabulary_set)
             relationship = data_content[4 * i + 1].replace('\n', '')
@@ -276,7 +276,7 @@ def word_index_matrix_gen(vocabulary_list, wordvec_dict, wordvec_dim, offset=0):
     :return:
     """
     word_index_matrix = np.zeros((len(vocabulary_list)+offset, wordvec_dim), dtype=np.float32)
-    for i in xrange(len(vocabulary_list)):
+    for i in range(len(vocabulary_list)):
         word_index_matrix[i+offset] = wordvec_dict[vocabulary_list[i]]
     return word_index_matrix
 
@@ -291,7 +291,7 @@ def relation_dict_gender(rel_list):
     """
     rel_dict = dict()
     # 使用数字标签
-    for i in xrange(len(rel_list)):
+    for i in range(len(rel_list)):
         rel_dict[rel_list[i]] = i
     return rel_dict
 
@@ -317,7 +317,7 @@ def pos_index_matrix_gen(start_num, end_num, posvec_dict, posvec_dim):
     """
     pos_num = end_num - start_num + 2
     pos_index_matrix = np.zeros((pos_num, posvec_dim), dtype=theano.config.floatX)
-    for i in xrange(start_num, end_num+2):
+    for i in range(start_num, end_num+2):
         pos_index_matrix[i-start_num] = posvec_dict[i]
     return pos_index_matrix
 
@@ -346,11 +346,11 @@ def data_process(data_cleared, voc_dict, relvec_dict, aligned=False, start_num=-
     l5_list = list()
     data_processed = dict()
 
-    max_length = max(map(lambda i: len(i), data_cleared["Sentences"]))
+    max_length = max([len(i) for i in data_cleared["Sentences"]])
 
-    for i in xrange(len(data_cleared)):
+    for i in range(len(data_cleared)):
         if i % 100 == 0:
-            print "Processed:\t" + str(i) + "\t" + time.ctime()
+            print("Processed:\t" + str(i) + "\t" + time.ctime())
 
         sent = data_cleared.ix[i, "Sentences"]
         e1_pos, e2_pos = data_cleared.ix[i, "EntitiesPos"]
@@ -433,39 +433,39 @@ if __name__ == "__main__":
     # 数据处理部分
     if PROCESS:
         # 处理原始数据
-        print "Processing data..." + "\t"*3 + time.ctime()
+        print("Processing data..." + "\t"*3 + time.ctime())
 
         # 数据清洗
-        print "Cleaning data..." + "\t"*3 + time.ctime()
+        print("Cleaning data..." + "\t"*3 + time.ctime())
         data_cleared, list_vocab, list_rel = data_clear(data_file)
-        cPickle.dump(data_cleared, open(data_cleared_file, "w"))
-        cPickle.dump(list_vocab, open(list_vocabulary_file, "w"))
-        cPickle.dump(list_rel, open(list_relation_file, "w"))
-        print "Data cleared." + "\t"*3 + time.ctime()
+        pickle.dump(data_cleared, open(data_cleared_file, "w"))
+        pickle.dump(list_vocab, open(list_vocabulary_file, "w"))
+        pickle.dump(list_rel, open(list_relation_file, "w"))
+        print("Data cleared." + "\t"*3 + time.ctime())
 
         # 词字典生成
         # 生成词对应位置的词典，注意这里要给补零的留出位置。
-        print "Generating vocabulary dict..." + "\t"*3 + time.ctime()
+        print("Generating vocabulary dict..." + "\t"*3 + time.ctime())
         dict_vocabulary = list_to_dict(list_vocab, offset=1)
-        cPickle.dump(dict_vocabulary, open(dict_vocabulary_file, "w"))
-        print "Vocabulary dict generated." + "\t"*3 + time.ctime()
+        pickle.dump(dict_vocabulary, open(dict_vocabulary_file, "w"))
+        print("Vocabulary dict generated." + "\t"*3 + time.ctime())
 
         # 生成位置信息向量字典
-        print "Generating posvec dict..." + "\t"*3 + time.ctime()
+        print("Generating posvec dict..." + "\t"*3 + time.ctime())
         dict_posvec = posvec_dict_gender(posvec_dimension, start_num=start_num, end_num=end_num)
-        cPickle.dump(dict_posvec, open(dict_posvec_file, "w"))
-        print "Posvec dict generated." + "\t"*3 + time.ctime()
+        pickle.dump(dict_posvec, open(dict_posvec_file, "w"))
+        print("Posvec dict generated." + "\t"*3 + time.ctime())
 
         # 生成位置信息向量矩阵
-        print "Generating posvec matrix..." + "\t"*3 + time.ctime()
+        print("Generating posvec matrix..." + "\t"*3 + time.ctime())
         posidx_matrix = pos_index_matrix_gen(
           start_num=start_num, end_num=end_num, posvec_dict=dict_posvec, posvec_dim=posvec_dimension
         )
-        cPickle.dump(posidx_matrix, open(matrix_pos_index_file, "w"))
-        print "Posvec matrix generated." + "\t"*3 + time.ctime()
+        pickle.dump(posidx_matrix, open(matrix_pos_index_file, "w"))
+        print("Posvec matrix generated." + "\t"*3 + time.ctime())
 
         # 生成词向量词典
-        print "Generating wordvec dict..." + "\t"*3 + time.ctime()
+        print("Generating wordvec dict..." + "\t"*3 + time.ctime())
         mongo_client = pymongo.MongoClient(host="127.0.0.1", port=27017)
         mongo_db = mongo_client["wordvec"]
         if wordvec_dimension == 50:
@@ -475,49 +475,49 @@ if __name__ == "__main__":
         else:
             raise ValueError
         dict_wordvec = wordvec_dict_gender(list_vocab, mongo_collection, wordvec_dimension)
-        cPickle.dump(dict_wordvec, open(dict_wordvec_file, "w"))
-        print "Wordvec dict generated." + "\t"*3 + time.ctime()
+        pickle.dump(dict_wordvec, open(dict_wordvec_file, "w"))
+        print("Wordvec dict generated." + "\t"*3 + time.ctime())
 
         # 生成词向量矩阵
-        print "Generating wordvec matrix..." + "\t"*3 + time.ctime()
+        print("Generating wordvec matrix..." + "\t"*3 + time.ctime())
         matrix_wordidx = word_index_matrix_gen(list_vocab, dict_wordvec, wordvec_dimension, offset=1)
-        cPickle.dump(matrix_wordidx, open(matrix_word_index_file, "w"))
-        print "Wordvec matrix generated." + "\t"*3 + time.ctime()
+        pickle.dump(matrix_wordidx, open(matrix_word_index_file, "w"))
+        print("Wordvec matrix generated." + "\t"*3 + time.ctime())
 
         # 生成关系向量字典
-        print "Generating relvec dict..." + "\t"*3 + time.ctime()
+        print("Generating relvec dict..." + "\t"*3 + time.ctime())
         dict_relation = relation_dict_gender(list_rel)
-        cPickle.dump(dict_relation, open(dict_relation_file, "w"))
-        print "Relvec dict generated." + "\t"*3 + time.ctime()
+        pickle.dump(dict_relation, open(dict_relation_file, "w"))
+        print("Relvec dict generated." + "\t"*3 + time.ctime())
 
-        print "Processing Finshed." + "\t"*3 + time.ctime()
+        print("Processing Finshed." + "\t"*3 + time.ctime())
 
     else:
         # 直接调用之前处理的结果
-        print "Loading data..." + "\t"*3 + time.ctime()
-        data_cleared = cPickle.load(open(data_cleared_file))
-        list_vocab = cPickle.load(open(list_vocabulary_file))
-        list_rel = cPickle.load(open(list_relation_file))
-        dict_vocabulary = cPickle.load(open(dict_vocabulary_file))
-        dict_wordvec = cPickle.load(open(dict_wordvec_file))
-        dict_relation = cPickle.load(open(dict_relation_file))
-        matrix_wordidx = cPickle.load(open(matrix_word_index_file))
-        matrix_posidx= cPickle.load(open(matrix_pos_index_file))
-        dict_posvec = cPickle.load(open(dict_posvec_file))
-        print "Loading Finished." + "\t"*3 + time.ctime()
+        print("Loading data..." + "\t"*3 + time.ctime())
+        data_cleared = pickle.load(open(data_cleared_file))
+        list_vocab = pickle.load(open(list_vocabulary_file))
+        list_rel = pickle.load(open(list_relation_file))
+        dict_vocabulary = pickle.load(open(dict_vocabulary_file))
+        dict_wordvec = pickle.load(open(dict_wordvec_file))
+        dict_relation = pickle.load(open(dict_relation_file))
+        matrix_wordidx = pickle.load(open(matrix_word_index_file))
+        matrix_posidx= pickle.load(open(matrix_pos_index_file))
+        dict_posvec = pickle.load(open(dict_posvec_file))
+        print("Loading Finished." + "\t"*3 + time.ctime())
 
     if GENDATA:
-        print "Generating  data..." + "\t"*3 + time.ctime()
+        print("Generating  data..." + "\t"*3 + time.ctime())
 
-        print "Processing cleared data..." + "\t"*3 + time.ctime()
+        print("Processing cleared data..." + "\t"*3 + time.ctime())
         processed_data = data_process(data_cleared, dict_vocabulary, dict_relation, ALIGN, start_num=start_num, end_num=end_num)
         if ALIGN:
-            print "Saveing alignd data..." + "\t"*3 + time.ctime()
-            cPickle.dump(processed_data, open(data_aligned_file, "w"))
+            print("Saveing alignd data..." + "\t"*3 + time.ctime())
+            pickle.dump(processed_data, open(data_aligned_file, "w"))
         else:
-            print "Saveing processed data..." + "\t"*3 + time.ctime()
-            cPickle.dump(processed_data, open(data_processed_file, "w"))
-        print "Data has been processed." + "\t"*3 + time.ctime()
+            print("Saveing processed data..." + "\t"*3 + time.ctime())
+            pickle.dump(processed_data, open(data_processed_file, "w"))
+        print("Data has been processed." + "\t"*3 + time.ctime())
 
-        print "Generating Finished." + "\t"*3 + time.ctime()
+        print("Generating Finished." + "\t"*3 + time.ctime())
 
